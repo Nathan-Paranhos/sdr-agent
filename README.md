@@ -28,7 +28,7 @@ O app cria/atualiza o banco automaticamente no startup com `prisma db push`.
 Somente o numero configurado em `OPERATOR_PHONE` pode enviar CSV:
 
 ```env
-OPERATOR_PHONE=+5511996961151
+OPERATOR_PHONE=+5511xxxxxx
 ```
 
 Envie um arquivo `.csv` ou cole o CSV em texto no WhatsApp conectado ao bot.
