@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+logs
+.env
+.wwebjs_auth
+.wwebjs_cache
+*.db
+*.db-journal
+prisma/*.db
+prisma/*.db-journal
+*.log
+*.csv
+*.tar.gz 
+bin/ 

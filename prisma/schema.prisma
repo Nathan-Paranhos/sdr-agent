@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  tenant_id          String       @id @default(uuid())
+  name               String
+  whatsapp_number_id String       @default("local-qr")
+  agent_name         String       @default("Assistente")
+  agent_persona      String?
+  score_threshold    Int          @default(60)
+  service_category   String?
+  delivery_channels  String       @default("{}")
+  active             Boolean      @default(true)
+  created_at         DateTime     @default(now())
+  leads              Lead[]
+  human_queue        HumanQueue[]
+
+  @@map("tenants")
+}
+
+model Lead {
+  lead_id             String             @id @default(uuid())
+  tenant_id           String
+  tenant              Tenant             @relation(fields: [tenant_id], references: [tenant_id])
+  company_name        String
+  contact_name        String?
+  phone               String
+  phone_digits        String
+  website             String?
+  instagram           String?
+  source              String
+  segment             String?
+  research_status     String             @default("pending")
+  conversation_status String             @default("not_started")
+  lead_score          Int                @default(0)
+  form_sent_at        DateTime?
+  form_responses      String?
+  follow_up_count     Int                @default(0)
+  last_message_at     DateTime?
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+  diagnoses           CompanyDiagnosis[]
+  messages            Message[]
+  outbound_messages   OutboundMessage[]
+  human_queue         HumanQueue[]
+  score_events        ScoreEvent[]
+
+  @@unique([phone_digits, tenant_id])
+  @@index([tenant_id])
+  @@index([research_status])
+  @@index([conversation_status])
+  @@map("leads")
+}
+
+model CompanyDiagnosis {
+  diagnosis_id          String   @id @default(uuid())
+  lead_id               String
+  lead                  Lead     @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade)
+  company_segment       String?
+  company_size_estimate String?
+  main_service          String?
+  detected_problems     String   @default("[]")
+  opportunities         String   @default("[]")
+  tech_stack_detected   String   @default("[]")
+  tone                  String?
+  instagram_active      Boolean?
+  website_quality       String?
+  personalization_hook  String?
+  confidence_score      Float    @default(0)
+  low_confidence        Boolean  @default(false)
+  research_sources      String   @default("[]")
+  raw_website_text      String?
+  raw_instagram_data    String?
+  created_at            DateTime @default(now())
+
+  @@index([lead_id])
+  @@map("company_diagnoses")
+}
+
+model Message {
+  message_id  String   @id @default(uuid())
+  lead_id     String
+  lead        Lead     @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade)
+  role        String
+  body        String
+  intent      String?
+  confidence  Float?
+  flagged     Boolean  @default(false)
+  whatsapp_id String?
+  created_at  DateTime @default(now())
+
+  @@index([lead_id, created_at])
+  @@map("messages")
+}
+
+model OutboundMessage {
+  message_id      String    @id @default(uuid())
+  lead_id         String
+  lead            Lead      @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade)
+  body            String
+  type            String
+  scheduled_at    DateTime
+  sent_at         DateTime?
+  delivery_status String    @default("scheduled")
+  whatsapp_msg_id String?
+  created_at      DateTime  @default(now())
+
+  @@index([scheduled_at])
+  @@map("outbound_messages")
+}
+
+model HumanQueue {
+  queue_id    String    @id @default(uuid())
+  lead_id     String
+  lead        Lead      @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade)
+  tenant_id   String
+  tenant      Tenant    @relation(fields: [tenant_id], references: [tenant_id])
+  reason      String
+  status      String    @default("pending")
+  assigned_to String?
+  context     String?
+  created_at  DateTime  @default(now())
+  resolved_at DateTime?
+
+  @@index([status, created_at])
+  @@map("human_queue")
+}
+
+model ScoreEvent {
+  event_id    String   @id @default(uuid())
+  lead_id     String
+  lead        Lead     @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade)
+  event_type  String
+  points      Int
+  score_after Int
+  meta        String?
+  created_at  DateTime @default(now())
+
+  @@index([lead_id])
+  @@map("score_events")
+}
+
+model GroupMessage {
+  message_id   String   @id @default(uuid())
+  group_id     String
+  author       String
+  author_phone String?
+  body         String
+  media_type   String   @default("text")
+  whatsapp_id  String?
+  is_from_bot  Boolean  @default(false)
+  created_at   DateTime @default(now())
+
+  @@index([group_id, created_at])
+  @@index([author])
+  @@map("group_messages")
+}
+
+model MemberEvaluation {
+  evaluation_id String   @id @default(uuid())
+  group_id      String
+  member_name   String
+  evaluation    String
+  created_at    DateTime @default(now())
+
+  @@index([group_id, member_name])
+  @@map("member_evaluations")
+}
